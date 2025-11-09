@@ -1,3 +1,4 @@
+% main.m - Enhanced with Tesseract OCR
 clear; clc; close all;
 
 % Add paths
@@ -23,7 +24,7 @@ ext = lower(ext);
 % Prepare output filename
 timestamp = datestr(now, 'yyyy_mm_dd_HH_MM_SS');
 outputDir = fullfile(pwd, 'output');
-if ~exist(outputDir, 'dir'); mkdir(outputDIr); end
+if ~exist(outputDir, 'dir'); mkdir(outputDir); end
 outputFile = fullfile(outputDir, ['ExtractText_' timestamp '.txt']);
 
 % Process based on filetype
@@ -41,24 +42,27 @@ else
     return;
 end
 
+fprintf('Processing %d page(s) with Tesseract OCR...\n', numel(pages));
+
 allText = '';
 for p = 1:numel(pages)
     I = pages{p};
-    fprintf('Processing page %d / %d...\n', p, numel(pages));
-    % Preprocess
+    fprintf('\n=== Processing page %d / %d ===\n', p, numel(pages));
+    
+    % Preprocess (minimal for Tesseract)
     [Ibin, Igray, maskTextCandidate] = preprocessImage(I, settings);
     
-    % OCR + Structuring
+    % Extract text using Tesseract
     pageText = extractTextFromImage(Igray, Ibin, maskTextCandidate, settings);
     
-    % Add page separators in case of PDF's
+    % Add page separators for multi-page documents
     if numel(pages) > 1
         allText = [allText sprintf('=== Page %d ===\n', p) pageText sprintf('\n\n')];
     else
         allText = [allText pageText];
     end
     
-    % Show visual debug
+    % Show visual debug if enabled
     if settings.showDebug
         displayResults(I, Ibin, maskTextCandidate);
     end
@@ -66,4 +70,16 @@ end
 
 % Save to file
 saveToTextFile(outputFile, allText);
-fprintf('Saved extracted text to : \n%s\n', outputFile);
+fprintf('\n=== EXTRACTION COMPLETE ===\n');
+fprintf('Saved extracted text to: \n%s\n', outputFile);
+fprintf('Total text length: %d characters\n', length(allText));
+
+% Display first few lines of extracted text
+fprintf('\n=== EXTRACTED TEXT PREVIEW ===\n');
+lines = strsplit(allText, '\n');
+for i = 1:min(10, length(lines))
+    fprintf('%s\n', lines{i});
+end
+if length(lines) > 10
+    fprintf('... (showing first 10 of %d lines)\n', length(lines));
+end

@@ -5,11 +5,11 @@ function pages = processPDF(pdfPath)
 
 pages = {};
 try
-    info = imfinfo(pdPath);
+    info = imfinfo(pdfPath);
     numPages = numel(info);
     for k = 1:numPages
         try
-            I = imread(pdPath, k);
+            I = imread(pdfPath, k);
             % Convert indexed images to RGB
             if ismatrix(I)
                 I = repmat(I, [1 1 3]);
